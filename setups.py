@@ -57,13 +57,16 @@ def setup9_3(data, stop_entry_dist, stop_loss_dist, ema_p=9, side='buy', verbose
 			else:
 				if papers:
 					stop_at = round(now['Low'] - stop_loss_dist, 2)
-					print(f'NOVO STOP A {stop_at}')
+					if verbose:
+						print(f'NOVO STOP A {stop_at}')
 				ref_idx, signal_idx = 0, 0
 
-	res = round(data['SIGNAL'].sum(), 2)
 	if verbose:
+		res = round(data['SIGNAL'].sum(), 2)
 		print(f'# stop_entry_dist: {stop_entry_dist} / stop_loss_dist: {stop_loss_dist}')
 		print(f'# RESULTADO FINAL: {res}\n\n')
 		print(data['SIGNAL'].describe())
+
+	data.drop(columns=["EMA9", "EMA9UP"], inplace=True)
 
 	return data

@@ -8,11 +8,11 @@ from datetime import datetime
 
 def do_uptrend(source: pd.DataFrame, name):
 	uptrend = pd.Series((source[name][1:].reset_index(drop=True) >
-						 source[name][:-1].reset_index(drop=True)).astype('int'), name=name + "_UPTREND")
+						 source[name][:-1].reset_index(drop=True)).astype('int'), name=name + "_UP")
 
 	source = source.join(uptrend)
 
-	source[name + "_UPTREND"] = source[name + "_UPTREND"].shift(1)
+	source[name + "_UP"] = source[name + "_UP"].shift(1)
 
 	return source
 
