@@ -51,8 +51,8 @@ for stock in papers:
 		stock_df = build(stock_df, 1, '9.3')
 
 		all_stocks.append(stock_df)
-	except:
-		print(f'DEU BOSTA IRMAO: {stock}')
+	except Exception as e:
+		print(f'DEU BOSTA IRMAO: {stock}\n\n{e}')
 
 full_df = pd.concat(all_stocks)
 
