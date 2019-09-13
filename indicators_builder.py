@@ -7,8 +7,8 @@ from datetime import datetime
 
 
 def do_uptrend(source: pd.DataFrame, name):
-	uptrend = pd.Series((source[name][1:].reset_index(drop=True) >
-						 source[name][:-1].reset_index(drop=True)).astype('int'), name=name + "_UP")
+	uptrend = pd.Series((source[name][1:].reset_index(drop=True).astype('int') >
+						 source[name][:-1].reset_index(drop=True).astype('int')), name=name + "_UP")
 
 	source = source.join(uptrend)
 
@@ -88,12 +88,12 @@ def averages(source, type, periods, basis):
 
 
 def vwap(source):
-	return (source['Volume'] * (source['High'] + source['Low']) / 2).cumsum() / source['Volume'].cumsum()
+	return (source['volume'] * (source['high'] + source['low']) / 2).cumsum() / source['volume'].cumsum()
 
 
 def hilo(source, type, periods):
-	hi = source['High']
-	lo = source['Low']
+	hi = source['high']
+	lo = source['low']
 
 	for p in periods:
 		hi_name = type + '_HI_' + str(p)
@@ -114,8 +114,8 @@ def hilo(source, type, periods):
 	for p in periods:
 		hi_name = type + '_HI_' + str(p)
 		lo_name = type + '_LO_' + str(p)
-		source = do_over(source, 'Close', hi_name)
-		source = do_over(source, 'Close', lo_name)
+		source = do_over(source, 'close', hi_name)
+		source = do_over(source, 'close', lo_name)
 
 	# Drop
 	for p in periods:
@@ -127,7 +127,7 @@ def hilo(source, type, periods):
 
 
 def didi(source, short, mid, long, type):
-	price = source['Close']
+	price = source['close']
 
 	short_sma = getattr(talib, type)(price, short)
 	mid_sma = getattr(talib, type)(price, mid)
@@ -157,7 +157,7 @@ def didi(source, short, mid, long, type):
 	return source
 
 def super_didi(source, short, mid, long, longlong, type):
-	price = source['Close']
+	price = source['close']
 
 	short_sma = getattr(talib, type)(price, short)
 	mid_sma = getattr(talib, type)(price, mid)
@@ -213,11 +213,11 @@ def dmi(source, dmi_period, dmi_smooth):
 	adx_name = "ADX_" + str(dmi_period) + "_" + str(dmi_smooth)
 
 	source = source.join(
-		pd.Series(talib.MINUS_DI(source['High'], source['Low'], source['Close'], timeperiod=dmi_period),
+		pd.Series(talib.MINUS_DI(source['high'], source['low'], source['close'], timeperiod=dmi_period),
 				  name=minus_name))
-	source = source.join(pd.Series(talib.PLUS_DI(source['High'], source['Low'], source['Close'], timeperiod=dmi_period),
+	source = source.join(pd.Series(talib.PLUS_DI(source['high'], source['low'], source['close'], timeperiod=dmi_period),
 								   name=plus_name))
-	source = source.join(pd.Series(talib.ADX(source['High'], source['Low'], source['Close'], timeperiod=dmi_smooth),
+	source = source.join(pd.Series(talib.ADX(source['high'], source['low'], source['close'], timeperiod=dmi_smooth),
 								   name=adx_name))
 
 	# Trends
@@ -242,7 +242,7 @@ def dmi(source, dmi_period, dmi_smooth):
 
 
 def bbands(source, periods, devs):
-	price = source['Close']
+	price = source['close']
 
 	for i in range(3):
 		for p in periods:
@@ -267,8 +267,8 @@ def bbands(source, periods, devs):
 		for p in periods:
 			for d in devs:
 				bbands_name = '_TYPE' + str(i) + '_' + str(p) + 'P_' + str(d) + 'DEV'
-				source = do_over(source, 'Close', 'UPPERBAND' + bbands_name)
-				source = do_over(source, 'Close', 'LOWERBAND' + bbands_name)
+				source = do_over(source, 'close', 'UPPERBAND' + bbands_name)
+				source = do_over(source, 'close', 'LOWERBAND' + bbands_name)
 
 	# Above
 	for i in range(3):
@@ -290,9 +290,9 @@ def bbands(source, periods, devs):
 
 
 def stoch(source, fastk_p, slow_p):
-	high = source['High']
-	low = source['Low']
-	close = source['Close']
+	high = source['high']
+	low = source['low']
+	close = source['close']
 
 	for type in range(3):
 		stoch_name = 'STOCH_' + str(fastk_p) + 'FAST_' + str(slow_p) + 'SLOW_TYPE' + str(type) + '_'
@@ -327,7 +327,7 @@ def stoch(source, fastk_p, slow_p):
 
 
 def rsi(source, periods):
-	price = source['Close']
+	price = source['close']
 
 	for p in periods:
 		rsi_name = 'RSI_' + str(p)
@@ -361,7 +361,7 @@ def rsi(source, periods):
 
 
 def trix(source, periods):
-	price = source['Close']
+	price = source['close']
 
 	for p in periods:
 		trix_name = 'TRIX_' + str(p)
@@ -397,7 +397,7 @@ def cci(source, periods):
 
 	for p in periods:
 		cci_name = 'CCI_' + str(p)
-		cci = talib.CCI(source['High'], source['Low'], source['Close'], p)
+		cci = talib.CCI(source['high'], source['low'], source['close'], p)
 		source = source.join(pd.Series(cci, name=cci_name))
 
 	# Trends
@@ -427,9 +427,9 @@ def cci(source, periods):
 
 
 def macd(source, slow, fast, signal):
-	high = source['High']
-	low = source['Low']
-	close = source['Close']
+	high = source['high']
+	low = source['low']
+	close = source['close']
 
 	macd_name = 'MACD_' + str(fast) + '_' + str(slow) + '_' + str(signal) + '_'
 	macd, macdsignal, macdhist = talib.MACD(close, fastperiod=fast, slowperiod=slow, signalperiod=signal)
@@ -455,7 +455,7 @@ def macd(source, slow, fast, signal):
 
 def obv(source):
 
-	obv_ = talib.OBV(source['Close'], source['Volume'])
+	obv_ = talib.OBV(source['close'], source['volume'])
 
 	source = source.join(pd.Series(obv_, name='OBV'))
 
@@ -469,10 +469,10 @@ def obv(source):
 
 
 def candles(source):
-	open = source['Open']
-	high = source['High']
-	low = source['Low']
-	close = source['Close']
+	open = source['open']
+	high = source['high']
+	low = source['low']
+	close = source['close']
 
 	source = source.join(pd.Series(talib.CDL2CROWS(open, high, low, close), name='CDL2CROWS'))
 	source = source.join(pd.Series(talib.CDL3BLACKCROWS(open, high, low, close), name='CDL3BLACKCROWS'))
@@ -559,8 +559,8 @@ def classification(source, size):
 
 
 def classify(array: pd.DataFrame, size):
-	top_idx = array['High'].idxmax()
-	bottom_idx = array['Low'].idxmin()
+	top_idx = array['high'].idxmax()
+	bottom_idx = array['low'].idxmin()
 
 	return int(top_idx == size), int(bottom_idx == size)
 
@@ -569,7 +569,7 @@ def str_candles(source):
 	str_candle = []
 	for i in range(len(source)):
 		str_candle.append(
-			1 if abs(source['Close'][i] - source['Open'][i]) > 0.5 * (source['High'][i] - source['Low'][i]) else 0)
+			1 if abs(source['close'][i] - source['open'][i]) > 0.5 * (source['high'][i] - source['low'][i]) else 0)
 
 	source['STR_CANDLE'] = str_candle
 
@@ -585,7 +585,7 @@ def str_candles(source):
 # # source = source.join(pd.Series(vwap(source), name='VWAP'))
 #
 # # PRICE
-# source = do_uptrend(source, 'Close')
+# source = do_uptrend(source, 'close')
 #
 # print(datetime.now())
 # print(len(list(source)))
@@ -597,37 +597,37 @@ def str_candles(source):
 # print(len(list(source)))
 # print('SMA')
 # # SMAs
-# source = averages(source, 'SMA', [2, 3, 5, 9, 14, 20, 26, 50, 80, 100, 200], 'Close')
+# source = averages(source, 'SMA', [2, 3, 5, 9, 14, 20, 26, 50, 80, 100, 200], 'close')
 #
 # print(datetime.now())
 # print('EMA')
 # # EMAs
-# source = averages(source, 'EMA', [2, 3, 5, 9, 14, 26, 72], 'Close')
+# source = averages(source, 'EMA', [2, 3, 5, 9, 14, 26, 72], 'close')
 #
 # print(datetime.now())
 # print('WMA')
 # # WMA
-# source = averages(source, 'WMA', [2, 3, 5, 9, 14, 26, 72], 'Close')
+# source = averages(source, 'WMA', [2, 3, 5, 9, 14, 26, 72], 'close')
 #
 # print(datetime.now())
 # print(len(list(source)))
 # print('KAMA')
 # # KAMA
-# source = averages(source, 'KAMA', [2, 3, 5, 9, 14, 26, 72], 'Close')
+# source = averages(source, 'KAMA', [2, 3, 5, 9, 14, 26, 72], 'close')
 #
 # print(datetime.now())
 # print(len(list(source)))
 # print('TEMA')
 # # KAMA
-# source = averages(source, 'TEMA', [2, 3, 5, 9, 14, 26, 72], 'Close')
+# source = averages(source, 'TEMA', [2, 3, 5, 9, 14, 26, 72], 'close')
 #
 # print(datetime.now())
 # print(len(list(source)))
 # print('VOLUME')
 # # MAs of VOLUME
-# source = averages(source, 'SMA', [2, 3, 5, 9, 14, 20, 26, 50, 80, 100, 200], 'Volume')
-# # source = averages(source, 'EMA', [3, 5, 9, 14, 20, 26, 50, 72], 'Volume')
-# # source = averages(source, 'WMA', [3, 5, 9, 14, 20, 26, 50, 72], 'Volume')
+# source = averages(source, 'SMA', [2, 3, 5, 9, 14, 20, 26, 50, 80, 100, 200], 'volume')
+# # source = averages(source, 'EMA', [3, 5, 9, 14, 20, 26, 50, 72], 'volume')
+# # source = averages(source, 'WMA', [3, 5, 9, 14, 20, 26, 50, 72], 'volume')
 #
 # print(datetime.now())
 # print(len(list(source)))
@@ -717,7 +717,7 @@ def str_candles(source):
 #
 # source = source.loc[200:].reset_index().drop(columns="index")
 # source = source.dropna()
-# source = source.drop(columns=["Date", "Close", "Open", "High", "Low", "Quantity", "Volume"])
+# source = source.drop(columns=["Date", "close", "open", "high", "low", "Quantity", "volume"])
 #
 # label = []
 # ant = 1
