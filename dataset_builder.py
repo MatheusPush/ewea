@@ -4,7 +4,7 @@ from datetime import datetime
 import indicators_builder as bd
 
 
-def build(data, level, setup):
+def build(data, level, setup, signal_validation=False):
 
 	if level == 1:
 		full_periods = [3, 5, 7, 9, 11, 14, 16, 18, 21]
@@ -29,36 +29,40 @@ def build(data, level, setup):
 
 	# PROCESS ENTRYS
 	if setup == '9.3':
-		data = setup9_3(data, 0.1, 0.1)
+		data, ref_idx, signal_idx = setup9_3(data, 0.1, 0.1)
+
+		if signal_validation and signal_idx <= 0:
+			return data, ref_idx, signal_idx
+
 
 	# CHOOSE CANDLE TO STUDY
 	data['TARGET_REG'] = data['SIGNAL']
 
 	# GET INDICATORS
-	print(datetime.now())
-	print(len(list(data)))
-	print('SMA')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('SMA')
 	# SMAs
 	data = bd.averages(data, 'SMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
 
-	print(datetime.now())
-	print('EMA')
+	# print(datetime.now())
+	# print('EMA')
 	# EMAs
 	data = bd.averages(data, 'EMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
 
-	print(datetime.now())
-	print('TEMA')
+	# print(datetime.now())
+	# print('TEMA')
 	# TEMAs
 	data = bd.averages(data, 'TEMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
 
-	print(datetime.now())
-	print('WMA')
+	# print(datetime.now())
+	# print('WMA')
 	# WMAs
 	data = bd.averages(data, 'WMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('VOLUME')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('VOLUME')
 	# MAs of VOLUME
 	data = bd.averages(data, 'SMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'volume')
 	data = bd.averages(data, 'EMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'volume')
@@ -94,25 +98,25 @@ def build(data, level, setup):
 	# 			for type in didi_types:
 	# 				data = bd.didi(data, i, j, k, type)
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('HILO')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('HILO')
 	# HiLo
 	for type in didi_types:
 		data = bd.hilo(data, type, [3, 5, 7, 9, 11, 14, 16, 18, 21])
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('STOCH')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('STOCH')
 	# STOCH
 	stoch_p = [21, 14, 9, 5, 3]
 	for i in range(len(stoch_p)):
 		for j in range(i + 1, len(stoch_p)):
 			data = bd.stoch(data, stoch_p[i], stoch_p[j])
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('MACD')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('MACD')
 	# MACD
 	signal_p = [21, 14, 9, 5, 3]
 	macd_p = [[21, 14],
@@ -122,23 +126,23 @@ def build(data, level, setup):
 		for s in range(m, len(signal_p)):
 			data = bd.macd(data, macd_p[m][0], macd_p[m][1], signal_p[s])
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('RSI')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('RSI')
 	# RSI
 	rsi_p = [3, 5, 7, 9, 11, 14, 16, 18, 21]
 	data = bd.rsi(data, rsi_p)
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('CCI')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('CCI')
 	# CCI
 	cci_p = [3, 5, 7, 9, 11, 14, 16, 18, 21]
 	data = bd.cci(data, cci_p)
 
-	print(datetime.now())
-	print(len(list(data)))
-	print('TRIX')
+	# print(datetime.now())
+	# print(len(list(data)))
+	# print('TRIX')
 	# TRIX
 	trix_p = [21, 14, 9, 5, 3]
 	data = bd.trix(data, trix_p)
@@ -156,10 +160,11 @@ def build(data, level, setup):
 	data['HIGH_CLOSE'] = hammer
 
 	# MAKE TARGETS
-	data = data.dropna(subset=['TARGET_REG'])
+	if not signal_validation:
+		data = data.dropna(subset=['TARGET_REG'])
 	data['TARGET_BIN'] = data['TARGET_REG'].apply(lambda x: 1 if x > 0 else 0)
-	for i in range(2, 6):
-		data[f'TARGET_Q{i}'] = pd.qcut(data['TARGET_REG'], i, labels=False)
+	# for i in range(2, 6):
+	# 	data[f'TARGET_Q{i}'] = pd.qcut(data['TARGET_REG'], i, labels=False)
 
 	data.drop(columns=["timestamp",
 					   "close",
@@ -173,7 +178,7 @@ def build(data, level, setup):
 					   "REF",
 					   "SIGNAL"], inplace=True)
 
-	return data
+	return data, ref_idx, signal_idx
 
 	# TEST & SAVE...
 	# data.to_csv(f'output/{dire}_{filename}_level{level}.csv', index=False)

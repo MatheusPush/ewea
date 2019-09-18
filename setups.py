@@ -6,7 +6,7 @@ def close_position(data, papers, close_price):
 		result = round((close_price / p['order_price'] - 1) * 100, 2)
 		data.loc[p['ref_idx'], 'REF'] = result
 		data.loc[p['signal_idx'], 'SIGNAL'] = result
-		print(f'>> RESULT: {result}')
+		# print(f'>> RESULT: {result}')
 	return data
 
 
@@ -69,4 +69,4 @@ def setup9_3(data, stop_entry_dist, stop_loss_dist, ema_p=9, side='buy', verbose
 
 	data.drop(columns=["EMA9", "EMA9UP"], inplace=True)
 
-	return data
+	return data.reset_index(drop=True), ref_idx - ema_p + 1, signal_idx - ema_p + 1

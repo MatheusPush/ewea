@@ -48,7 +48,7 @@ for stock in papers:
 		stock_df['timestamp'] = pd.to_datetime(stock_df['timestamp'], format='%Y-%m-%d')
 		stock_df = stock_df[stock_df['timestamp'] > '2010-01-01'].reset_index(drop=True)
 
-		stock_df = build(stock_df, 1, '9.3')
+		stock_df, _ = build(stock_df, 1, '9.3')
 
 		all_stocks.append(stock_df)
 	except Exception as e:
