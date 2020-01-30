@@ -1,12 +1,13 @@
 import pandas as pd, talib as tb, numpy as np
 
 
-def close_position(data, papers, close_price):
+def close_position(data, papers, close_price, verbose=False):
 	for p in papers:
 		result = round((close_price / p['order_price'] - 1) * 100, 2)
 		data.loc[p['ref_idx'], 'REF'] = result
 		data.loc[p['signal_idx'], 'SIGNAL'] = result
-		# print(f'>> RESULT: {result}')
+		if verbose:
+			print(f'>> RESULT: {result}')
 	return data
 
 
@@ -27,6 +28,7 @@ def setup9_3(data, stop_entry_dist, stop_loss_dist, ema_p=9, side='buy', verbose
 	ref_idx = 0
 	signal_idx = 0
 	stop_at = 0
+	target = 0
 
 	for i in range(1, len(data)):
 		yst = data.iloc[i - 1]
@@ -36,24 +38,47 @@ def setup9_3(data, stop_entry_dist, stop_loss_dist, ema_p=9, side='buy', verbose
 				order_price = round(data.loc[signal_idx, "high"] + stop_entry_dist, 2)
 				papers.append({'ref_idx': ref_idx, 'signal_idx': signal_idx, 'order_price': order_price})
 				stop_at = round(data.loc[ref_idx + 1:signal_idx, 'low'].min() - stop_loss_dist, 2)
+
+				# 1:1 stop entry
+				target = round(order_price + 1 * (order_price - stop_at), 2)
+				# target = round(order_price * 1.03, 2)
+				# max = data.loc[ref_idx:signal_idx, 'high'].max()
+				# target = round(order_price + 1 * (max - stop_at), 2)
+
 				ref_idx, signal_idx = 0, 0
 				if verbose:
-					print(f'COMPROU A {order_price} COM STOP A {stop_at}')
+					print(f'COMPROU A {order_price} COM STOP A {stop_at} E ALVO EM {target}')
+
+				if target and now['high'] >= target:
+					if verbose:
+						print(f'TARGET!!! @ {target}')
+					data = close_position(data, papers, target, verbose=verbose)
+					stop_at, target = 0, 0
+					papers = []
 			elif stop_at and now['low'] <= stop_at:
 				if verbose:
 					print(f'STOPPED A {stop_at}')
-				data = close_position(data, papers, stop_at)
-				stop_at = 0
+				data = close_position(data, papers, stop_at, verbose=verbose)
+				stop_at, target = 0, 0
+				papers = []
+			elif target and now['high'] >= target:
+				if verbose:
+					print(f'TARGET!!! @ {target}')
+				data = close_position(data, papers, target, verbose=verbose)
+				stop_at, target = 0, 0
 				papers = []
 			elif now['EMA9UP']:
 				if not ref_idx and yst['low'] <= now['close'] < yst['close']:
 					ref_idx = yst.name
 					if verbose:
 						print(f'TEMOS UM REF >> N{now["close"]} Y(REF){yst["close"]}')
-				elif ref_idx and now['close'] < data.loc[ref_idx, 'close']:
-					signal_idx = now.name
-					if verbose:
-						print(f'SINAL EM >> N{now["high"]}')
+				elif ref_idx:
+					if now['close'] < data.loc[ref_idx, 'close']:
+						signal_idx = now.name
+						if verbose:
+							print(f'SINAL EM >> N{now["high"]}')
+					else:
+						ref_idx, signal_idx = 0, 0
 			else:
 				if papers:
 					stop_at = round(now['low'] - stop_loss_dist, 2)
@@ -63,8 +88,10 @@ def setup9_3(data, stop_entry_dist, stop_loss_dist, ema_p=9, side='buy', verbose
 
 	if verbose:
 		res = round(data['SIGNAL'].sum(), 2)
+		comp = round(data['SIGNAL'].apply(lambda x: (x/100)+1).prod(), 3)
 		print(f'# stop_entry_dist: {stop_entry_dist} / stop_loss_dist: {stop_loss_dist}')
-		print(f'# RESULTADO FINAL: {res}\n\n')
+		print(f'# RESULTADO FINAL (SUM): {res}')
+		print(f'# RESULTADO FINAL (COMPOSTOS): {comp}\n\n')
 		print(data['SIGNAL'].describe())
 
 	data.drop(columns=["EMA9", "EMA9UP"], inplace=True)

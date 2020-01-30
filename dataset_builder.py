@@ -4,7 +4,7 @@ from datetime import datetime
 import indicators_builder as bd
 
 
-def build(data, level, setup, signal_validation=False):
+def build(data, level, setup, signal_validation=False, verbose=False):
 
 	if level == 1:
 		full_periods = [3, 5, 7, 9, 11, 14, 16, 18, 21]
@@ -29,7 +29,7 @@ def build(data, level, setup, signal_validation=False):
 
 	# PROCESS ENTRYS
 	if setup == '9.3':
-		data, ref_idx, signal_idx = setup9_3(data, 0.1, 0.1)
+		data, ref_idx, signal_idx = setup9_3(data, 0.01, 0.01, verbose=verbose)
 
 		if signal_validation and signal_idx <= 0:
 			return data, ref_idx, signal_idx
@@ -39,33 +39,38 @@ def build(data, level, setup, signal_validation=False):
 	data['TARGET_REG'] = data['SIGNAL']
 
 	# GET INDICATORS
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('SMA')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('SMA')
 	# SMAs
-	data = bd.averages(data, 'SMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
+	data = bd.averages(data, 'SMA', full_periods, 'close')
 
-	# print(datetime.now())
-	# print('EMA')
+	if verbose:
+		print(datetime.now())
+		print('EMA')
 	# EMAs
-	data = bd.averages(data, 'EMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
+	data = bd.averages(data, 'EMA', full_periods, 'close')
 
-	# print(datetime.now())
-	# print('TEMA')
+	if verbose:
+		print(datetime.now())
+		print('TEMA')
 	# TEMAs
-	data = bd.averages(data, 'TEMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
+	data = bd.averages(data, 'TEMA', full_periods, 'close')
 
-	# print(datetime.now())
-	# print('WMA')
+	if verbose:
+		print(datetime.now())
+		print('WMA')
 	# WMAs
-	data = bd.averages(data, 'WMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'close')
+	data = bd.averages(data, 'WMA', full_periods, 'close')
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('VOLUME')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('VOLUME')
 	# MAs of VOLUME
-	data = bd.averages(data, 'SMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'volume')
-	data = bd.averages(data, 'EMA', [3, 5, 7, 9, 11, 14, 16, 18, 21], 'volume')
+	data = bd.averages(data, 'SMA', full_periods, 'volume')
+	data = bd.averages(data, 'EMA', full_periods, 'volume')
 
 	didi_types = ['SMA', 'EMA']
 	# print(datetime.now())
@@ -98,25 +103,28 @@ def build(data, level, setup, signal_validation=False):
 	# 			for type in didi_types:
 	# 				data = bd.didi(data, i, j, k, type)
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('HILO')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('HILO')
 	# HiLo
 	for type in didi_types:
-		data = bd.hilo(data, type, [3, 5, 7, 9, 11, 14, 16, 18, 21])
+		data = bd.hilo(data, type, full_periods)
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('STOCH')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('STOCH')
 	# STOCH
 	stoch_p = [21, 14, 9, 5, 3]
 	for i in range(len(stoch_p)):
 		for j in range(i + 1, len(stoch_p)):
 			data = bd.stoch(data, stoch_p[i], stoch_p[j])
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('MACD')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('MACD')
 	# MACD
 	signal_p = [21, 14, 9, 5, 3]
 	macd_p = [[21, 14],
@@ -126,23 +134,26 @@ def build(data, level, setup, signal_validation=False):
 		for s in range(m, len(signal_p)):
 			data = bd.macd(data, macd_p[m][0], macd_p[m][1], signal_p[s])
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('RSI')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('RSI')
 	# RSI
-	rsi_p = [3, 5, 7, 9, 11, 14, 16, 18, 21]
+	rsi_p = full_periods
 	data = bd.rsi(data, rsi_p)
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('CCI')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('CCI')
 	# CCI
-	cci_p = [3, 5, 7, 9, 11, 14, 16, 18, 21]
+	cci_p = full_periods
 	data = bd.cci(data, cci_p)
 
-	# print(datetime.now())
-	# print(len(list(data)))
-	# print('TRIX')
+	if verbose:
+		print(datetime.now())
+		print(len(list(data)))
+		print('TRIX')
 	# TRIX
 	trix_p = [21, 14, 9, 5, 3]
 	data = bd.trix(data, trix_p)

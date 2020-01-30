@@ -60,7 +60,15 @@ papers = ['PETR4',
 		  'GNDI3',
 		  'MRVE3',
 		  'BRKM5',
-		  'MULT3']
+		  'MULT3',
+		  'TCSA3',
+		  'JHSF3',
+		  'CNTO3',
+		  'ALPA4',
+		  'BPAN4',
+		  'YDUQ3',
+		  'HYPE3',
+		  'SUZB3']
 
 for stock in papers:
 	while True:
@@ -72,7 +80,7 @@ for stock in papers:
 		if 'timestamp' in stock_df.columns:
 			break
 
-	stock_df = stock_df[1:]
+	# stock_df = stock_df[1:]
 
 	stock_df = stock_df.sort_values(['timestamp']).reset_index(drop=True)
 	stock_df['timestamp'] = pd.to_datetime(stock_df['timestamp'], format='%Y-%m-%d')
@@ -84,4 +92,6 @@ for stock in papers:
 		X = np.asarray([stock_df.loc[signal_idx].values])
 		y_pred_proba = model.predict_proba(X)
 		prob = y_pred_proba[0, 1]
-		print(f'\n\n # SINAL DE COMPRA EM {stock} COM {format(prob * 100, ".2f")}% DE CONFIANÇA!\n\n')
+		print(f'\n # SINAL DE COMPRA EM {stock} COM {format(prob * 100, ".2f")}% DE CONFIANÇA!\n')
+	else:
+		print(f'{stock}...')
